@@ -22,7 +22,7 @@ create_trips_table = """CREATE TABLE IF NOT EXISTS trips (trip_id BIGINT PRIMARY
                                                           start_station_id INT NOT NULL,
                                                           end_station_id INT NOT NULL,
                                                           bike_id INT NOT NULL,
-                                                          user_type TEXT NOT NULL CHECK (user_type IN ('Member', 'Casual'))
+                                                          user_type TEXT NOT NULL CHECK (user_type IN ('Member', 'Casual')),
 
                                                           FOREIGN KEY (start_station_id) REFERENCES stations(station_id),
                                                           FOREIGN KEY (end_station_id) REFERENCES stations(station_id),
