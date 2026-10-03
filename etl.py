@@ -3,7 +3,7 @@ import numpy as np
 import json
 from pathlib import Path
 import psycopg
-from ddl_queries import create_stations_table, create_bikes_table, create_trips_table, create_rejected_table 
+from ddl_queries import (create_stations_table, create_bikes_table, create_trips_table, create_rejected_table, drop_trips_table, drop_stations_table, drop_bikes_table, drop_rejected_table)
 
 import os
 from dotenv import load_dotenv
@@ -68,6 +68,8 @@ def build_stations(trips_raw, stations_raw):
 
     #get every station in 2024 and merge w station info from station_information.json
     stations = stations.merge(stations_raw[["station_id", "lat", "lon", "capacity"]], on="station_id", how="left")
+
+    stations = stations.rename(columns={"lat": "latitude", "lon": "longitude"})
     
     stations["capacity"] = stations["capacity"].astype("Int64")
 
@@ -80,7 +82,7 @@ def build_bikes(trips_raw):
 #load
 
 def create_tables(conn):
-    statement = [create_stations_table, create_bikes_table, create_trips_table, create_rejected_table]
+    statement = [drop_rejected_table, drop_trips_table, drop_stations_table, drop_bikes_table, create_stations_table, create_bikes_table, create_trips_table, create_rejected_table]
 
     with conn.cursor() as cur:
         for s in statement:
@@ -134,6 +136,7 @@ def main():
             load_data(conn, rejected_trips, "rejected_trips")
     except Exception as e:
         print(f"ETL failed: {e}")
+        raise e
 
 if __name__ == "__main__":
     main()
