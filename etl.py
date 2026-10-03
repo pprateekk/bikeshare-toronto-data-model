@@ -13,13 +13,15 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 #load data
 def extract_data():
-    trips_raw = pd.read_csv(Path('data/raw/bikeshare_ridership-2024.csv'))
+    trips_raw = pd.read_csv(Path('data/raw/bikeshare-ridership-2024.csv'))
 
     with open(Path('data/raw/station_information.json')) as f:
         stations_raw = pd.json_normalize(json.load(f)["data"]["stations"])
     
     stations_raw["station_id"] = stations_raw["station_id"].astype("int64") #convert station_id from string to int
     trips_raw.columns = trips_raw.columns.str.lower()
+    for col in ["start_station_id", "end_station_id", "bike_id"]:
+        trips_raw[col] = trips_raw[col].astype("Int64")
 
     return trips_raw, stations_raw
 
@@ -61,10 +63,26 @@ def transform_trips(trips_raw):
     return trips, rejected_trips
 
 def build_stations(trips_raw, stations_raw):
+    """
+    initially, in trips_raw start_station_id was type "int64"
+    and during the transform_trips(), end_station_id was converted to "Int64" but it did not pass on to the trips_raw df (original one) => meaning the original trips_raw df still had end_station_id as "float64" and start_station_id as "int64" 
+
+    so here when we tried to concatenate the start_stations and end_stations, we got a warning that the dtypes were different and it was converting the start_station_id to "float64" to match the end_station_id (int64 + float64 => float64)
+
+    => therefore the error :
+        ETL failed: invalid input syntax for type integer: "7041.0"
+        CONTEXT:  COPY stations, line 1, column station_id: "7041.0"
+    
+    => this was resolved my adding lines 23, 24
+
+    once the station_id (concatenated df) was converted to "Int64", we had to drop the NULL rows (which wre from the end_station_id col - had NULL values)
+    """
     start_stations = trips_raw[["start_station_id", "start_station_name"]].rename(columns={"start_station_id": "station_id", "start_station_name": "station_name"})
     end_stations = trips_raw[["end_station_id", "end_station_name"]].rename(columns={"end_station_id": "station_id", "end_station_name": "station_name"})
     
-    stations = pd.concat([start_stations, end_stations]).drop_duplicates(subset=["station_id"])
+    stations = pd.concat([start_stations, end_stations])
+    stations = stations.dropna(subset=["station_id"])
+    stations = stations.drop_duplicates(subset=["station_id"])
 
     #get every station in 2024 and merge w station info from station_information.json
     stations = stations.merge(stations_raw[["station_id", "lat", "lon", "capacity"]], on="station_id", how="left")
