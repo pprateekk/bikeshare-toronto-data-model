@@ -17,8 +17,8 @@ create_bikes_table = """CREATE TABLE IF NOT EXISTS bikes (bike_id INT PRIMARY KE
 create_trips_table = """CREATE TABLE IF NOT EXISTS trips (trip_id BIGINT PRIMARY KEY,
                                                           start_time TIMESTAMP NOT NULL,
                                                           end_time TIMESTAMP NOT NULL,
-                                                          trip_duration_sec INT NOT NULL
-                                                            CHECK (trip_duration_sec > 0),
+                                                          duration_sec INT NOT NULL
+                                                            CHECK (duration_sec > 0),
                                                           start_station_id INT NOT NULL,
                                                           end_station_id INT NOT NULL,
                                                           bike_id INT NOT NULL,
@@ -33,7 +33,7 @@ create_trips_table = """CREATE TABLE IF NOT EXISTS trips (trip_id BIGINT PRIMARY
 create_rejected_table = """CREATE TABLE IF NOT EXISTS rejected_trips (trip_id TEXT,
                                                                       start_time TEXT,
                                                                       end_time TEXT,
-                                                                      trip_duration_sec TEXT,
+                                                                      duration_sec TEXT,
                                                                       start_station_id TEXT,
                                                                       end_station_id TEXT,
                                                                       bike_id TEXT,
